@@ -1,7 +1,5 @@
 package ru.gr0946x.ui;
-
 import ru.gr0946x.ui.painting.FractalPainter;
-
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -12,16 +10,18 @@ import java.io.File;
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.Color;
+import ru.gr0946x.ui.fractals.FractalConfig;
 
 public class MenuManager {
     private final FractalPainter painter;
     private final SelectablePanel panel;
+    private final MainWindow mainWindow;
 
-    public MenuManager(FractalPainter painter, SelectablePanel panel) {
+    public MenuManager(FractalPainter painter, SelectablePanel panel, MainWindow mainWindow) {
         this.painter = painter;
         this.panel = panel;
+        this.mainWindow = mainWindow;
     }
-
     public JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -58,50 +58,48 @@ public class MenuManager {
         menuBar.add(editMenu);
 
         JMenu viewMenu = new JMenu("Вид");
-
         JMenu formulaMenu = new JMenu("Формулы для построения");
-
         ButtonGroup formulaGroup = new ButtonGroup();
-        JRadioButtonMenuItem formula1 = new JRadioButtonMenuItem("Формула RGB 1 (sin/cos)");
-        JRadioButtonMenuItem formula2 = new JRadioButtonMenuItem("Формула RGB 2");
-        JRadioButtonMenuItem formula3 = new JRadioButtonMenuItem("Формула RGB 3");
 
-        formula1.setSelected(true);
-        formula1.addActionListener(this::showNotImplementedMessage);
-        formula2.addActionListener(this::showNotImplementedMessage);
-        formula3.addActionListener(this::showNotImplementedMessage);
+        for (int i = 0; i < FractalConfig.FRACTAL_NAMES.size(); i++) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(FractalConfig.FRACTAL_NAMES.get(i));
+            final int idx = i;
 
-        formulaGroup.add(formula1);
-        formulaGroup.add(formula2);
-        formulaGroup.add(formula3);
+            item.addActionListener(e -> {
+                if (item.isSelected()) {
+                    mainWindow.applySettings(idx, mainWindow.getCurrentColorIdx());
+                }
+            });
 
-        formulaMenu.add(formula1);
-        formulaMenu.add(formula2);
-        formulaMenu.add(formula3);
+            formulaGroup.add(item);
+            formulaMenu.add(item);
+        }
+        if (formulaGroup.getButtonCount() > 0) {
+            formulaGroup.getElements().nextElement().setSelected(true);
+        }
 
         JMenu colorSchemeMenu = new JMenu("Цветовая схема");
-
         ButtonGroup schemeGroup = new ButtonGroup();
-        JRadioButtonMenuItem scheme1 = new JRadioButtonMenuItem("Схема 1 (по умолчанию)");
-        JRadioButtonMenuItem scheme2 = new JRadioButtonMenuItem("Схема 2");
-        JRadioButtonMenuItem scheme3 = new JRadioButtonMenuItem("Схема 3");
 
-        scheme1.setSelected(true);
-        scheme1.addActionListener(this::showNotImplementedMessage);
-        scheme2.addActionListener(this::showNotImplementedMessage);
-        scheme3.addActionListener(this::showNotImplementedMessage);
+        for (int i = 0; i < FractalConfig.COLOR_NAMES.size(); i++) {
+            JRadioButtonMenuItem item = new JRadioButtonMenuItem(FractalConfig.COLOR_NAMES.get(i));
+            final int idx = i;
 
-        schemeGroup.add(scheme1);
-        schemeGroup.add(scheme2);
-        schemeGroup.add(scheme3);
+            item.addActionListener(e -> {
+                if (item.isSelected()) {
+                    mainWindow.applySettings(mainWindow.getCurrentFractalIdx(), idx);
+                }
+            });
 
-        colorSchemeMenu.add(scheme1);
-        colorSchemeMenu.add(scheme2);
-        colorSchemeMenu.add(scheme3);
+            schemeGroup.add(item);
+            colorSchemeMenu.add(item);
+        }
+        if (schemeGroup.getButtonCount() > 0) {
+            schemeGroup.getElements().nextElement().setSelected(true);
+        }
 
         viewMenu.add(formulaMenu);
         viewMenu.add(colorSchemeMenu);
-
         menuBar.add(viewMenu);
 
         JMenu fractalMenu = new JMenu("Фрактал");
@@ -124,7 +122,6 @@ public class MenuManager {
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
-
     private void saveImage(String format) {
         System.out.println("SAVE CLICKED " + format);
         JFileChooser chooser = new JFileChooser();
@@ -211,7 +208,6 @@ public class MenuManager {
             }
         }
     }
-
     private void saveImageWithChoice() {
         saveImage(null);
     }
