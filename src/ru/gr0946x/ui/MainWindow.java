@@ -1,6 +1,7 @@
 package ru.gr0946x.ui;
 
 import ru.gr0946x.Converter;
+import ru.gr0946x.ui.fractals.DynamicIterations;
 import ru.gr0946x.ui.fractals.Fractal;
 import ru.gr0946x.ui.fractals.Mandelbrot;
 import ru.gr0946x.ui.painting.FractalPainter;
@@ -18,9 +19,10 @@ public class MainWindow extends JFrame {
 
     private final SelectablePanel mainPanel;
     private final Painter painter;
-    private final Fractal mandelbrot;
+    private final Mandelbrot mandelbrot;
     private final Converter conv;
     private final MenuManager menuManager;
+    private final DynamicIterations dynamicIter;
 
     private Point mousePressPoint = null;
 
@@ -29,7 +31,12 @@ public class MainWindow extends JFrame {
         setMinimumSize(new Dimension(800, 650));
         setTitle("Фрактал Множество Мандельброта");
 
-        mandelbrot = new Mandelbrot();
+        dynamicIter = new DynamicIterations();
+
+        Mandelbrot mandelbrotImpl = new Mandelbrot();
+        mandelbrotImpl.setDynamicIterations(dynamicIter);
+        mandelbrot = mandelbrotImpl;
+
         conv = new Converter(-2.0, 1.0, -1.0, 1.0);
         painter = new FractalPainter(mandelbrot, conv, (value) -> {
             if (value == 1.0) return Color.BLACK;
@@ -42,6 +49,8 @@ public class MainWindow extends JFrame {
         mainPanel = new SelectablePanel(painter, conv);
         mainPanel.setBackground(Color.WHITE);
 
+        mainPanel.setDynamicIterations(dynamicIter);
+
         mainPanel.addSelectListener((r) -> {
             var xMin = conv.xScr2Crt(r.x);
             var xMax = conv.xScr2Crt(r.x + r.width);
@@ -50,7 +59,6 @@ public class MainWindow extends JFrame {
             mainPanel.applyZoom(xMin, xMax, yMin, yMax);
         });
 
-        // 🔍 Отслеживание клика для открытия окна Жюлиа
         mainPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -82,6 +90,26 @@ public class MainWindow extends JFrame {
 
         menuManager = new MenuManager((FractalPainter) painter);
         setJMenuBar(menuManager.createMenuBar());
+
+        JMenu viewMenu = null;
+        for (int i = 0; i < getJMenuBar().getMenuCount(); i++) {
+            JMenu menu = getJMenuBar().getMenu(i);
+            if (menu.getText().equals("Вид")) {
+                viewMenu = menu;
+                break;
+            }
+        }
+
+        if (viewMenu != null) {
+            viewMenu.addSeparator();
+            JCheckBoxMenuItem dynamicIterItem = new JCheckBoxMenuItem("Динамическое число итераций");
+            dynamicIterItem.addActionListener(e -> {
+                boolean enabled = dynamicIterItem.isSelected();
+                dynamicIter.setEnabled(enabled);
+                mainPanel.repaint();
+            });
+            viewMenu.add(dynamicIterItem);
+        }
 
         setContent();
 

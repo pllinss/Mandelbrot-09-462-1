@@ -1,5 +1,7 @@
 package ru.gr0946x.ui;
+
 import ru.gr0946x.ui.painting.FractalPainter;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -8,11 +10,14 @@ import java.io.File;
 import javax.imageio.ImageIO;
 import java.awt.Graphics2D;
 import java.awt.Color;
+
 public class MenuManager {
     private final FractalPainter painter;
+
     public MenuManager(FractalPainter painter) {
         this.painter = painter;
     }
+
     public JMenuBar createMenuBar() {
         JMenuBar menuBar = new JMenuBar();
 
@@ -113,6 +118,7 @@ public class MenuManager {
                 JOptionPane.INFORMATION_MESSAGE
         );
     }
+
     private void saveImage(String format) {
         System.out.println("SAVE CLICKED " + format);
         JFileChooser chooser = new JFileChooser();
@@ -199,6 +205,7 @@ public class MenuManager {
             }
         }
     }
+
     private void saveImageWithChoice() {
         saveImage(null);
     }
