@@ -18,12 +18,10 @@ public class MenuManager {
 
         JMenu fileMenu = new JMenu("Файл");
 
-        JMenuItem saveJpgItem = new JMenuItem("Сохранить как JPG...");
-        JMenuItem savePngItem = new JMenuItem("Сохранить как PNG...");
-        fileMenu.add(saveJpgItem);
-        fileMenu.add(savePngItem);
-        saveJpgItem.addActionListener(e -> saveImage("jpg"));
-        savePngItem.addActionListener(e -> saveImage("png"));
+        JMenuItem saveItem = new JMenuItem("Сохранить как...");
+        saveItem.addActionListener(e -> saveImageWithChoice());
+        fileMenu.add(saveItem);
+
         JMenuItem saveFracItem = new JMenuItem("Сохранить как FRAC...");
         saveFracItem.addActionListener(this::showNotImplementedMessage);
         fileMenu.add(saveFracItem);
@@ -120,25 +118,62 @@ public class MenuManager {
         JFileChooser chooser = new JFileChooser();
         chooser.setDialogTitle("Сохранить изображение");
 
+        FileNameExtensionFilter jpgFilter = new FileNameExtensionFilter("JPEG Image (*.jpg, *.jpeg)", "jpg", "jpeg");
+        FileNameExtensionFilter pngFilter = new FileNameExtensionFilter("PNG Image (*.png)", "png");
+
+        chooser.addChoosableFileFilter(jpgFilter);
+        chooser.addChoosableFileFilter(pngFilter);
+
+        if ("jpg".equals(format)) {
+            chooser.setFileFilter(jpgFilter);
+        } else if ("png".equals(format)) {
+            chooser.setFileFilter(pngFilter);
+        }
+
+        chooser.setAcceptAllFileFilterUsed(false);
+
         if (chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION) {
-            java.io.File file = chooser.getSelectedFile();
+            File file = chooser.getSelectedFile();
 
-            String name = file.getName().toLowerCase();
-
-            if (name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png")) {
-                file = new File(file.getAbsolutePath().replaceAll("\\.(jpg|jpeg|png)$", ""));
+            String selectedFormat;
+            if (chooser.getFileFilter() == jpgFilter) {
+                selectedFormat = "jpg";
+            } else if (chooser.getFileFilter() == pngFilter) {
+                selectedFormat = "png";
+            } else {
+                selectedFormat = format;
             }
 
-            file = new File(file.getAbsolutePath() + "." + format);
+            String filePath = file.getPath();
+
+            String lowerPath = filePath.toLowerCase();
+            if (lowerPath.endsWith(".jpg") || lowerPath.endsWith(".jpeg")) {
+                filePath = filePath.substring(0, lowerPath.lastIndexOf('.'));
+            } else if (lowerPath.endsWith(".png")) {
+                filePath = filePath.substring(0, lowerPath.lastIndexOf('.'));
+            }
+
+            file = new File(filePath + "." + selectedFormat);
+
+            if (file.exists()) {
+                int result = JOptionPane.showConfirmDialog(
+                        null,
+                        "Файл \"" + file.getName() + "\" уже существует.\nЗаменить его?",
+                        "Подтверждение перезаписи",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE
+                );
+
+                if (result != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
 
             try {
                 BufferedImage img = painter.createImage();
 
-// ✍️ ПОДПИСЬ КООРДИНАТ
                 Graphics2D g = img.createGraphics();
-
                 g.setColor(Color.WHITE);
-
                 g.drawString(
                         String.format("Re: [%.3f; %.3f], Im: [%.3f; %.3f]",
                                 painter.getConverter().getXMin(),
@@ -149,13 +184,22 @@ public class MenuManager {
                         10,
                         img.getHeight() - 10
                 );
-
                 g.dispose();
 
-                ImageIO.write(img, format, file);
+                ImageIO.write(img, selectedFormat, file);
+
             } catch (Exception ex) {
                 ex.printStackTrace();
+                JOptionPane.showMessageDialog(
+                        null,
+                        "Ошибка при сохранении файла:\n" + ex.getMessage(),
+                        "Ошибка",
+                        JOptionPane.ERROR_MESSAGE
+                );
             }
         }
+    }
+    private void saveImageWithChoice() {
+        saveImage(null);
     }
 }
